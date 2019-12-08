@@ -12,7 +12,11 @@ void TaskRunner::Run()
         }
         task = queue.Front();
         queue.DequeueTask();
-        task();
+        try {
+            task();
+        } catch (const std::exception &ex) {
+            fprintf(stderr, "Exception: %s\n", ex.what());
+        }
     }
     Destroy();
 }
