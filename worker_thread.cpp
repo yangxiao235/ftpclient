@@ -1,6 +1,8 @@
 #include "worker_thread.h"
 
+namespace ftpclient { 
 namespace worker_thread {
+
 void TaskRunner::Run() 
 {
     auto &queue = TaskQueue::GetInstance();
@@ -57,3 +59,4 @@ bool TaskQueue::IsEmpty()
 }
 
 } // namespace of worker_thread
+} // namespace of ftpclient

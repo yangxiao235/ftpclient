@@ -6,7 +6,7 @@
 #include <memory>
 #include <functional>
 #include <mutex>
-
+namespace ftpclient {
 namespace worker_thread {
 class ThreadControlBlock
 {
@@ -55,5 +55,5 @@ private:
 using TaskRunnerPointer = std::unique_ptr<TaskRunner, void (*)(TaskRunner *)>;
 
 } // namespace worker_thread
-
+} // namespace ftpclient
 #endif // _WOKER_THREAD_H

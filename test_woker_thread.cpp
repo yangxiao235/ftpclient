@@ -1,13 +1,15 @@
 #include "network_task.h"
 #include "worker_thread.h"
+#include "notify_msg.h"
 #include <thread>
 #include <cstdio>
 #include <string>
 #include <memory>
 #include <chrono>
 
-using namespace worker_thread;
-using namespace network_task;
+using namespace ftpclient::worker_thread;
+using namespace ftpclient::network_task;
+using namespace ftpclient::notify_msg;
 using asio::io_context;
 
 int main(int argc, char *argv[])
@@ -26,7 +28,30 @@ int main(int argc, char *argv[])
 
     auto &queue = TaskQueue::GetInstance();
     auto io = std::make_shared<io_context>();
-    queue.EnqueueTask(ConnectServer{io, argv[1], static_cast<uint16_t>(std::stoi(argv[2]))});
-    std::this_thread::sleep_for(std::chrono::seconds{ 3 });
+    std::string serverIP{ argv[1] };
+    uint16_t serverPort = static_cast<uint16_t>(std::stoi(argv[2]));
+    queue.EnqueueTask(ConnectServer{io, serverIP, serverPort});
+
+    auto &notifyQueue = NotifyQueue::GetInstance();
+    NotifyMsg  msg;
+    for (;;) {
+        if (!notifyQueue.IsEmpty()) {
+            msg = notifyQueue.Front();
+            notifyQueue.DequeueMsg();
+            if (msg.type == MsgType::CONNECT) {
+                auto info = reinterpret_cast<ConnectInfo *>(msg.data);
+                if (info->success) {
+                    fprintf(stderr, "Connection to %s:%d\n", serverIP.c_str(), serverPort);
+                } else {
+                    fprintf(stderr, "Connection failed to establish. %s\n", info->errmsg.c_str());
+                }
+                delete info;
+                info = nullptr;
+                msg.data = nullptr;
+            }
+
+        }
+
+    }
 
 }
