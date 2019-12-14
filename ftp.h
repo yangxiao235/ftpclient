@@ -3,13 +3,20 @@
 
 #include <vector>
 #include <utility>
-#include <array>
 #include <string>
-
+#include <sstream>
 namespace ftpclient {
 
-using FTPReply = std::pair<std::array<char, 4>, std::string>;
-using FTPReplyList = std::vector<FTPReply>;  
+struct Reply
+{
+    char code[4];
+    std::string detail;
+};
+
+struct DirContent 
+{
+    std::shared_ptr<std::vector<std::string>> content;
+};
 
 enum class TransmissonMode: size_t
 {
@@ -90,7 +97,7 @@ static std::string FtypeToStr(FileType type)
 class FTPClientConfig
 {
 public:
-    static FTPClientConfig *GetInstance();
+    static FTPClientConfig &GetInstance();
 public:
     TransmissonMode mode = TransmissonMode::STREAM_MODE;
     FileStructure   structure = FileStructure::FILE;
@@ -113,12 +120,7 @@ std::ostringstream& BuildCmdImpl(std::ostringstream &sout, const T &arg, const A
     return BuildCmdImpl(sout, args...);
 }
 
-std::string BuildCmd(const std::string &cmd) {
-    std::ostringstream sout;
-    sout << cmd;
-    sout << "\r\n";
-    return sout.str();
-}    
+std::string BuildCmd(const std::string &cmd);
 
 template <typename T, typename... Args>
 std::string BuildCmd(const std::string &cmd, const T &arg, const Args&... args) {
@@ -128,8 +130,8 @@ std::string BuildCmd(const std::string &cmd, const T &arg, const Args&... args) 
     return sout.str();
 }
 
+bool ParseReply(const char *buf, size_t count, const char *&parseEnd, Reply &reply);
 
-bool ParseReply(const char *buf, size_t count, const char *&parseEnd, FTPReply &reply);
 
 } // namespace ftpclient
 

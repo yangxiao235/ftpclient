@@ -1,13 +1,12 @@
-#include "notify_msg.h"
+#include "ftp_notify_queue.h"
+#include <cassert>
 
 namespace ftpclient {
-namespace notify_msg {
-
 NotifyQueue& NotifyQueue::GetInstance()
 {
     static NotifyQueue *instance = nullptr;
     if (!instance) {
-        std::mutex  mx;
+        static std::mutex  mx;
         std::lock_guard<std::mutex> lock(mx);
         if (!instance) {
             instance = new NotifyQueue();
@@ -16,21 +15,23 @@ NotifyQueue& NotifyQueue::GetInstance()
     return *instance;
 }
 
-void NotifyQueue::EnqueueMsg(const NotifyMsg &msg)
+void NotifyQueue::Enqueue(const Notify &notify)
 {
     std::lock_guard<std::mutex> lock(m_accessMutex);
-    m_queue.push(msg);
+    m_queue.push(notify);
 }
 
-void NotifyQueue::DequeueMsg()
+void NotifyQueue::Dequeue()
 {
     std::lock_guard<std::mutex> lock(m_accessMutex);
+    assert(!m_queue.empty());
     m_queue.pop();
 }
 
-NotifyMsg NotifyQueue::Front()
+Notify NotifyQueue::Front()
 {
     std::lock_guard<std::mutex> lock(m_accessMutex);
+    assert(!m_queue.empty());
     return m_queue.front();
 }
 
@@ -40,5 +41,5 @@ bool NotifyQueue::IsEmpty()
     return m_queue.empty();
 }
 
-} // namespace notify_msg
-} // namespace ftpclient
+}// namespace ftpclient
+

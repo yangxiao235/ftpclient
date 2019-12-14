@@ -1,27 +1,68 @@
 #ifndef _FTP_CMD_QUEUE_H
 #define _FTP_CMD_QUEUE_H
 
-#include "ftp_cmd.h"
+#include <string>
+#include <queue>
+#include <mutex>
+#include <cassert>
 
 namespace ftpclient {
 
-class FTPCmdQueue
+class CmdQueue
 {
 public:
-    static FTPCmdQueue & GetInstance();
+    class CmdQueueProxy;
+    static CmdQueueProxy Create();
 public:
-    void Enqueue(const FTPCmdGroupPointer &);
+    void Enqueue(const std::string &);
     void Dequeue();
-    FTPCmdGroupPointer Front();
+    std::string Front();
     bool IsEmpty();
-    ~FTPCmdQueue() = default;
+    ~CmdQueue() = default;
 private:    
-    FTPCmdQueue() = default;
-    FTPCmdQueue(const FTPCmdQueue&) = delete;
-    FTPCmdQueue &operator=(const FTPCmdQueue&) = delete;
+    CmdQueue() = default;
+    CmdQueue(const CmdQueue&) = delete;
+    CmdQueue &operator=(const CmdQueue&) = delete;
     std::mutex  m_accessMutex;
-    std::queue<FTPCmdGroupPointer> m_queue;     
+    std::queue<std::string> m_queue;     
 };
+
+class CmdQueue::CmdQueueProxy
+{
+public:
+    CmdQueueProxy() = default;
+protected:
+    friend CmdQueueProxy CmdQueue::Create();
+    CmdQueueProxy(CmdQueue *queue)
+        :m_queue(queue)
+    {
+        assert(m_queue);
+    }    
+public:
+    void Enqueue(const std::string &cmd) 
+    {
+        assert(m_queue);
+        m_queue->Enqueue(cmd); 
+    }
+    void Dequeue() 
+    {
+        assert(m_queue);
+        m_queue->Dequeue();
+    }
+    std::string Front() 
+    {
+        assert(m_queue);
+        return m_queue->Front();
+    }
+    bool IsEmpty() 
+    {
+        assert(m_queue);
+        return m_queue->IsEmpty();
+    }
+private:
+    std::shared_ptr<CmdQueue> m_queue;
+};
+
 
 } // namespace ftpclient
 

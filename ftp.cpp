@@ -1,8 +1,11 @@
 #include "ftp.h"
 #include <mutex>
+#include <regex>
+
 namespace ftpclient {
 
 namespace {
+    
 bool IsMatchedMultiline(const char *buf, size_t count, const char *&parseEnd)
 {
     // 匹配ftp多行回复格式
@@ -53,11 +56,18 @@ bool IsMultiLineFormat(const char * buf, size_t count)
 
 } // anonymouse namespace 
 
-FTPClientConfig *FTPClientConfig::GetInstance()
+std::string BuildCmd(const std::string &cmd) {
+    std::ostringstream sout;
+    sout << cmd;
+    sout << "\r\n";
+    return sout.str();
+}    
+
+FTPClientConfig &FTPClientConfig::GetInstance()
 {
-    static FTPGlobalConfig *instance = nullptr;
+    static FTPClientConfig *instance = nullptr;
     if (!instance) {
-        std::mutex  mx;
+        static std::mutex  mx;
         std::lock_guard<std::mutex> lock(mx);
         if (!instance) {
             instance = new FTPClientConfig();
@@ -66,13 +76,13 @@ FTPClientConfig *FTPClientConfig::GetInstance()
     return *instance;    
 }
 
-bool ParseReply(const char *buf, size_t count, const char *&parseEnd, FTPReply &reply)
+bool ParseReply(const char *buf, size_t count, const char *&parseEnd, Reply &reply)
 {
     size_t   bytesRead = 0;
     size_t   freespace = count;
     size_t   bytesReadTotally = 0;  
     bool     isMultiLineReply = false;
-    // 判断ftp回复是单行还是多行
+    // 判断ftp回复是单行还是多�?
     if (IsOneLineFormat(buf, count)) {
         isMultiLineReply = false;
     } else if (IsMultiLineFormat(buf, count)){
@@ -83,32 +93,27 @@ bool ParseReply(const char *buf, size_t count, const char *&parseEnd, FTPReply &
         return false;
     }
     const char *matchEnd = nullptr;
-    // ftp回复为一行格式
+    // ftp回复为一行格�?
     if (!isMultiLineReply) {
         if (!IsMatchedOneLine(buf, count, matchEnd)) {
             parseEnd = nullptr;
             return false;    
         }
-        std::memcpy(&reply.first, buf, 3);
-        reply.first[3] = '\0';
-        reply.second.assign(buf + 3, matchEnd);
+        std::memcpy(&reply.code, buf, 3);
+        reply.code[3] = '\0';
+        reply.detail.assign(buf, matchEnd);
         parseEnd = matchEnd;
         return true;
-    }
-    // ftp回复为多行格式
-    if (IsMatchedMultiline(buf, count)) {
-        if (!IsMatchedOneLine(buf, count, matchEnd)) {
+    } else  {
+        if (!IsMatchedMultiline(buf, count, matchEnd)) {
             parseEnd = nullptr;
             return false;    
         }
-        std::memcpy(&reply.first, buf, 3);
-        reply.first[3] = '\0';
-        reply.second.assign(buf + 3, matchEnd);
+        std::memcpy(&reply.code, buf, 3);
+        reply.code[3] = '\0';
+        reply.detail.assign(buf, matchEnd);
         parseEnd = matchEnd;
         return true;
-    } else {
-        parseEnd = nullptr;
-        return false;
     }
 }
 
