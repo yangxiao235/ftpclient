@@ -1,4 +1,4 @@
-#include "thread_task.h"
+#include "ftpclient/thread_model/thread_task.h"
 #include <iostream>
 
 class MyTask : public ftpclient::ThreadTask

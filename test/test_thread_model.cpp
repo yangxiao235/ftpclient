@@ -1,7 +1,7 @@
-#define GOOGLE_GLOG_DLL_DECL 
-#include "thread_task.h"
-#include "thread_model.h"
-#include "thread_task_error.h"
+#include "ftpclient/config.h"
+#include "ftpclient/thread_model/thread_task.h"
+#include "ftpclient/thread_model/thread_model.h"
+#include "ftpclient/thread_model/thread_task_error.h"
 #include <glog/logging.h>
 #include <cstdio>
 #include <string>
@@ -34,7 +34,6 @@ public:
                     m_task.Init();
                     m_state = TASK_WILL_RUN;
                 } catch(const TaskInitFailed &ex) {
-                    m_task.Destroy();
                     m_task.Reset();
                     m_state = IDLE;
                     m_info.state.ThreadIdle(true);
@@ -45,13 +44,11 @@ public:
                 try {
                     m_task.Run();
                 } catch (const TaskRunComplete &ex) {
-                    m_task.Destroy();
                     m_task.Reset();
                     m_state = IDLE;
                     m_info.state.ThreadIdle(true);
                     LOG(INFO) << "Task Run Complete!" << ex.what();
                 } catch (const TaskRunFailed &ex) {
-                    m_task.Destroy();
                     m_task.Reset();
                     m_state = IDLE;
                     m_info.state.ThreadIdle(true);

@@ -1,7 +1,7 @@
-#define GOOGLE_GLOG_DLL_DECL 
-#include "thread_task.h"
-#include "thread_model.h"
-#include "thread_task_error.h"
+#include "ftpclient/config.h"
+#include "ftpclient/thread_model/thread_task.h"
+#include "ftpclient/thread_model/thread_model.h"
+#include "ftpclient/thread_model/thread_task_error.h"
 #include <glog/logging.h>
 #include <cstdio>
 #include <string>

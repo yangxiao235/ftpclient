@@ -1,5 +1,5 @@
-#include "ftp_notify_queue.h"
-#include "ftp.h"
+#include "ftpclient/notify/ftp_notify_queue.h"
+#include "ftpclient/ftp.h"
 #include <iostream>
 
 using namespace ftpclient;

@@ -1,9 +1,6 @@
-#define GLOG_NO_ABBREVIATED_SEVERITIES  
-#define GOOGLE_GLOG_DLL_DECL 
 #include "network_task.h"
-#include "thread_task_error.h"
+#include "ftpclient/thread_model/thread_task_error.h"
 #include <sstream>
-#include <glog/logging.h>
 
 namespace ftpclient {
 using asio::io_context;

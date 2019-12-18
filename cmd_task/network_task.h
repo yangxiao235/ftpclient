@@ -1,11 +1,11 @@
 #ifndef _NETWORK_TASK_H
 #define _NETWORK_TASK_H
 
-#define GOOGLE_GLOG_DLL_DECL 
-#include "common_types.h"
-#include "ftp_notify_queue.h"
-#include "ftp_cmd_queue.h"
-#include "thread_task.h"
+#include "ftpclient/config.h"
+#include "ftpclient/common_types.h"
+#include "ftpclient/notify/ftp_notify_queue.h"
+#include "ftpclient/cmd_task/ftp_cmd_queue.h"
+#include "ftpclient/thread_model/thread_task.h"
 #include <glog/logging.h>
 #include <asio.hpp>
 #include <string>
@@ -18,8 +18,6 @@ using asio::ip::tcp;
 using asio::ip::address;
 using asio::error_code;
 using asio::system_error;
-using ftpclient::common::IOContextPointer;
-using ftpclient::common::SocketPointer;
 
 class FTPClientTask : public ThreadTask
 {

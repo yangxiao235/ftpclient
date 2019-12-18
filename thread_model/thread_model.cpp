@@ -1,6 +1,4 @@
-#define GOOGLE_GLOG_DLL_DECL
-//#define GLOG_NO_ABBREVIATED_SEVERITIES
-
+#include "ftpclient/config.h"
 #include "thread_model.h"
 #include "thread_task_error.h"
 #include <glog/logging.h>

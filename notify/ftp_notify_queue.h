@@ -1,7 +1,7 @@
 #ifndef _FTP_NOTIFY_QUEUE_H
 #define _FTP_NOTIFY_QUEUE_H
 
-#include "ftp.h"
+#include "ftpclient/ftp.h"
 #include <queue>
 #include <mutex>
 
