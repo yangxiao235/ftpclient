@@ -22,7 +22,7 @@ int main()
         std::cout << msgdata->bytesRecv << std::endl;
         std::cout << msgdata->fileSize << std::endl;
     }
-
+    std::cout << "-----------------" <<std::endl;
     {
         Notify notify;
         auto data = new DataOfFTPFileDownloadFinish<std::string>;
@@ -35,7 +35,7 @@ int main()
         std::cout << msgdata->filenameOnLocal << std::endl;
         std::cout << msgdata->filenameOnServer << std::endl;
     }
-
+    std::cout << "-----------------" <<std::endl;
     {
         Notify notify;
         auto data = new DataOfFTPCmdNetworkConnect;

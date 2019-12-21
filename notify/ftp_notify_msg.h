@@ -211,7 +211,7 @@ struct EnumMapMsgType<MsgEnum::FTP_CMD_NETWORK_ERROR>
 template <MsgEnum type, class DataType = EnumMapMsgType<type>::DataType>
 std::shared_ptr<DataType> Extract(Notify notify)
 {
-    assert(notify.type == type);
+    assert(notify.msg == type);
     return std::shared_ptr<DataType>(
             reinterpret_cast<DataType *>(notify.data));
 }
@@ -224,169 +224,46 @@ std::shared_ptr<DataType<Path>> ExtractWithPath(Notify notify)
             reinterpret_cast<DataType<Path> *>(notify.data));
 }
 
-template <MsgEnum type = MsgEnum::FTP_REPLY, class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType> (*ExtractDataOfFTPReply)(Notify) 
-        =  &Extract<type>;
+constexpr auto ExtractDataOfFTPReply                 = &Extract<MsgEnum::FTP_REPLY>                 ;
+constexpr auto ExtractDataOfFTPDirContent            = &Extract<MsgEnum::FTP_DIR_CONTENT>           ;
+constexpr auto ExtractDataOfFTPCmdNetworkConnect     = &Extract<MsgEnum::FTP_CMD_NETWORK_CONNECT>   ;
+constexpr auto ExtractDataOfFTPCmdNetworkError       = &Extract<MsgEnum::FTP_CMD_NETWORK_ERROR>     ;
 
-template <MsgEnum type = MsgEnum::FTP_DIR_CONTENT>
-constexpr std::shared_ptr<typename EnumMapMsgType<type>::DataType> (*ExtractDataOfFTPDirContent)(Notify) 
-        = &Extract<type>;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileDownloadStart     = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileDownloadProgress  = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileDownloadError     = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileDownloadFinish    = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileUploadStart       = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_START>     ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileUploadProgress    = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileUploadError       = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
+template <class Path>
+constexpr auto ExtractDataOfFTPFileUploadFinish      = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
 
-template <MsgEnum type = MsgEnum::FTP_CMD_NETWORK_CONNECT, class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType> (*ExtractDataOfFTPCmdNetworkConnect)(Notify) 
-        =  &Extract<type>;
+constexpr auto ExtractDataOfFTPFileDownloadStartA     = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
+constexpr auto ExtractDataOfFTPFileDownloadProgressA  = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
+constexpr auto ExtractDataOfFTPFileDownloadErrorA     = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
+constexpr auto ExtractDataOfFTPFileDownloadFinishA    = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
+constexpr auto ExtractDataOfFTPFileUploadStartA       = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_START>     ;
+constexpr auto ExtractDataOfFTPFileUploadProgressA    = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
+constexpr auto ExtractDataOfFTPFileUploadErrorA       = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
+constexpr auto ExtractDataOfFTPFileUploadFinishA      = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
 
-template <MsgEnum type = MsgEnum::FTP_CMD_NETWORK_ERROR>
-constexpr std::shared_ptr<typename EnumMapMsgType<type>::DataType> (*ExtractDataOfFTPCmdNetworkError)(Notify)
-        = &Extract<type>;
+constexpr auto ExtractDataOfFTPFileDownloadStartW     = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
+constexpr auto ExtractDataOfFTPFileDownloadProgressW  = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
+constexpr auto ExtractDataOfFTPFileDownloadErrorW     = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
+constexpr auto ExtractDataOfFTPFileDownloadFinishW    = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
+constexpr auto ExtractDataOfFTPFileUploadStartW       = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_START>     ;
+constexpr auto ExtractDataOfFTPFileUploadProgressW    = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
+constexpr auto ExtractDataOfFTPFileUploadErrorW       = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
+constexpr auto ExtractDataOfFTPFileUploadFinishW      = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
 
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadStart)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadStartA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadStartW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadProgress)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadProgressA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadProgressW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadError)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadErrorA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadErrorW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadFinish)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadFinishA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_DOWNLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileDownloadFinishw)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadStart)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadStartA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_START, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadStartW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadProgress)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadProgressA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_PROGRESS, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadProgressW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadError)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadErrorA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_ERROR, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadErrorW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadFinish)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::string, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadFinishA)(Notify) 
-            =  &ExtractWithPath<Path, type>;
-
-template <class Path = std::wstring, 
-          MsgEnum type = MsgEnum::FTP_FILE_UPLOAD_FINISH, 
-          template <class> class DataType = EnumMapMsgType<type>::DataType>
-constexpr std::shared_ptr<DataType<Path>> (*ExtractDataOfFTPFileUploadFinishW)(Notify) 
-            =  &ExtractWithPath<Path, type>;
 
 }// namespace ftpclient
 
