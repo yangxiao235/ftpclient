@@ -13,10 +13,7 @@ struct Reply
     std::string detail;
 };
 
-struct DirContent 
-{
-    std::shared_ptr<std::vector<std::string>> content;
-};
+using DirContent = std::vector<std::string>;
 
 enum class TransmissonMode: size_t
 {

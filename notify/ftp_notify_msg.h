@@ -1,6 +1,7 @@
 #ifndef _FTP_NOTIFY_MSG_H
 #define _FTP_NOTIFY_MSG_H
 
+#include "ftpclient/platform_specific.h"
 #include <cassert>
 #include <string>
 #include <memory>
@@ -8,13 +9,16 @@
 
 
 namespace ftpclient {
+
 enum class MsgEnum 
 {
     FTP_CMD_NETWORK_CONNECT,
     FTP_CMD_NETWORK_ERROR,
     FTP_CMD_NETWORK_CLOSED,
     FTP_REPLY,
+    FTP_CMD_RECV_DATA,
     FTP_DIR_CONTENT,
+    FTP_GET_DIR_CONTENT_ERROR,
     FTP_FILE_DOWNLOAD_START,
     FTP_FILE_DOWNLOAD_PROGRESS,
     FTP_FILE_DOWNLOAD_ERROR,
@@ -31,11 +35,16 @@ struct DataOfFTPReply
     std::string detail;
 };
 
+struct DataOfFTPCmdRecvData
+{
+    std::string data;
+};
+
 struct DataOfFTPDirContent 
 {
     std::string path;
-    std::unique_ptr<char> buf;
-    uint16_t  bufSize;
+    std::unique_ptr<char []> buf;
+    size_t  bufSize;
 };
 
 struct DataOfFTPCmdNetworkConnect
@@ -49,68 +58,64 @@ struct DataOfFTPCmdNetworkError
     std::string errmsg;
 };
 
-template <class Path>
 struct DataOfFTPFileDownloadStart
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
 };
 
-template <class Path>
 struct DataOfFTPFileDownloadProgress
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
     uint64_t bytesRecv;
     uint64_t fileSize;
 };
 
-template <class Path>
 struct DataOfFTPFileDownloadError
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
     std::string  errmsg;
 };
 
-template <class Path>
 struct DataOfFTPFileDownloadFinish
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
 };
 
-template <class Path>
 struct DataOfFTPFileUploadStart
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
 };
 
-template <class Path>
 struct DataOfFTPFileUploadProgress
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
-    uint64_t bytesRecv;
+    FTPClientPathType filenameOnLocal;
+    uint64_t bytesSend;
     uint64_t fileSize;
 };
 
-template <class Path>
 struct DataOfFTPFileUploadError
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
     std::string  errmsg;
 };
 
-template <class Path>
 struct DataOfFTPFileUploadFinish
 {
     std::string filenameOnServer;
-    Path filenameOnLocal;
+    FTPClientPathType filenameOnLocal;
 };
 
+struct DataOfFTPGetDirContentError
+{
+    std::string errmsg;
+};
 
 struct Notify
 {
@@ -130,57 +135,49 @@ struct EnumMapMsgType<MsgEnum::FTP_DIR_CONTENT>
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_DOWNLOAD_ERROR>
 {
-    template <class Path>
-    using DataType =   DataOfFTPFileDownloadError<Path>;
+    using DataType =   DataOfFTPFileDownloadError;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_DOWNLOAD_FINISH>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileDownloadFinish<Path>;
+    using DataType = DataOfFTPFileDownloadFinish;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileDownloadProgress<Path>;
+    using DataType = DataOfFTPFileDownloadProgress;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_DOWNLOAD_START>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileDownloadStart<Path>;
+    using DataType = DataOfFTPFileDownloadStart;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_UPLOAD_ERROR>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileUploadError<Path>;
+    using DataType = DataOfFTPFileUploadError;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_UPLOAD_FINISH>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileUploadFinish<Path>;
+    using DataType = DataOfFTPFileUploadFinish;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_UPLOAD_PROGRESS>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileUploadProgress<Path>;
+    using DataType = DataOfFTPFileUploadProgress;
 };
 
 template <>
 struct EnumMapMsgType<MsgEnum::FTP_FILE_UPLOAD_START>
 {
-    template <class Path>
-    using DataType = DataOfFTPFileUploadStart<Path>;
+    using DataType = DataOfFTPFileUploadStart;
 };
 
 template <>
@@ -207,6 +204,17 @@ struct EnumMapMsgType<MsgEnum::FTP_CMD_NETWORK_ERROR>
     using DataType = DataOfFTPCmdNetworkError;
 };
 
+template <>
+struct EnumMapMsgType<MsgEnum::FTP_GET_DIR_CONTENT_ERROR>
+{
+    using DataType = DataOfFTPGetDirContentError;
+};
+
+template <>
+struct EnumMapMsgType<MsgEnum::FTP_CMD_RECV_DATA>
+{
+    using DataType = DataOfFTPCmdRecvData;
+}; 
 
 template <MsgEnum type, class DataType = EnumMapMsgType<type>::DataType>
 std::shared_ptr<DataType> Extract(Notify notify)
@@ -216,53 +224,201 @@ std::shared_ptr<DataType> Extract(Notify notify)
             reinterpret_cast<DataType *>(notify.data));
 }
 
-template <class Path, MsgEnum type, template <class> class DataType = EnumMapMsgType<type>::DataType>
-std::shared_ptr<DataType<Path>> ExtractWithPath(Notify notify)
-{
-    assert(notify.msg == type);
-    return std::shared_ptr<DataType<Path>>(
-            reinterpret_cast<DataType<Path> *>(notify.data));
-}
-
 constexpr auto ExtractDataOfFTPReply                 = &Extract<MsgEnum::FTP_REPLY>                 ;
 constexpr auto ExtractDataOfFTPDirContent            = &Extract<MsgEnum::FTP_DIR_CONTENT>           ;
 constexpr auto ExtractDataOfFTPCmdNetworkConnect     = &Extract<MsgEnum::FTP_CMD_NETWORK_CONNECT>   ;
 constexpr auto ExtractDataOfFTPCmdNetworkError       = &Extract<MsgEnum::FTP_CMD_NETWORK_ERROR>     ;
+constexpr auto ExtractDataOfFTPFileDownloadStart     = &Extract<MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
+constexpr auto ExtractDataOfFTPFileDownloadProgress  = &Extract<MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
+constexpr auto ExtractDataOfFTPFileDownloadError     = &Extract<MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
+constexpr auto ExtractDataOfFTPFileDownloadFinish    = &Extract<MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
+constexpr auto ExtractDataOfFTPFileUploadStart       = &Extract<MsgEnum::FTP_FILE_UPLOAD_START>     ;
+constexpr auto ExtractDataOfFTPFileUploadProgress    = &Extract<MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
+constexpr auto ExtractDataOfFTPFileUploadError       = &Extract<MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
+constexpr auto ExtractDataOfFTPFileUploadFinish      = &Extract<MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
+constexpr auto ExtractDataOfFTPCmdRecvData           = &Extract<MsgEnum::FTP_CMD_RECV_DATA>    ;
 
-template <class Path>
-constexpr auto ExtractDataOfFTPFileDownloadStart     = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileDownloadProgress  = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileDownloadError     = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileDownloadFinish    = &ExtractWithPath<Path, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileUploadStart       = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_START>     ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileUploadProgress    = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileUploadError       = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
-template <class Path>
-constexpr auto ExtractDataOfFTPFileUploadFinish      = &ExtractWithPath<Path, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
 
-constexpr auto ExtractDataOfFTPFileDownloadStartA     = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
-constexpr auto ExtractDataOfFTPFileDownloadProgressA  = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
-constexpr auto ExtractDataOfFTPFileDownloadErrorA     = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
-constexpr auto ExtractDataOfFTPFileDownloadFinishA    = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
-constexpr auto ExtractDataOfFTPFileUploadStartA       = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_START>     ;
-constexpr auto ExtractDataOfFTPFileUploadProgressA    = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
-constexpr auto ExtractDataOfFTPFileUploadErrorA       = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
-constexpr auto ExtractDataOfFTPFileUploadFinishA      = &ExtractWithPath<std::string, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
+// 构建消息附属数据的帮助例程
+static Notify BuildCmdNetworkConnect(const std::string &peerIP, uint16_t peerPort)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_CMD_NETWORK_CONNECT;
+    auto data = new DataOfFTPCmdNetworkConnect;
+    data->peerIP = peerIP;
+    data->peerPort = peerPort;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildCmdNetworkError(const std::string &errmsg)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_CMD_NETWORK_ERROR;
+    auto data = new DataOfFTPCmdNetworkError;
+    data->errmsg = errmsg;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildCmdNetworkClosed()
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_CMD_NETWORK_CLOSED;
+    notify.data = nullptr;
+    return notify;
+}
+static Notify BuildFTPReply(const DataOfFTPReply &reply)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_REPLY;
+    auto data = new DataOfFTPReply;
+    *data = reply;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildDirContent(const std::string &dir, std::unique_ptr<char[]> buf, size_t bufSize)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_DIR_CONTENT;
+    auto data = new DataOfFTPDirContent;
+    data->path = dir;
+    data->buf = std::move(buf);
+    data->bufSize = bufSize;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildDownloadStart(const std::string &filenameOnServer, const FTPClientPathType &filenameOnLocal)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_DOWNLOAD_START;
+    auto data = new DataOfFTPFileDownloadStart;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildDownloadProgress(const std::string &filenameOnServer, 
+                                              const FTPClientPathType &filenameOnLocal,
+                                              uint64_t bytesRecv,
+                                              uint64_t fileSize)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS;
+    auto data = new DataOfFTPFileDownloadProgress;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    data->bytesRecv = bytesRecv;
+    data->fileSize = fileSize;    
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildDownloadError(const std::string &filenameOnServer, 
+                                        const FTPClientPathType &filenameOnLocal,
+                                        const std::string &errmsg)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_DOWNLOAD_ERROR;
+    auto data = new DataOfFTPFileDownloadError;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    data->errmsg = errmsg;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildDownloadFinish(const std::string &filenameOnServer, const FTPClientPathType &filenameOnLocal)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_DOWNLOAD_FINISH;
+    auto data = new DataOfFTPFileDownloadFinish;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
 
-constexpr auto ExtractDataOfFTPFileDownloadStartW     = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_START>   ;
-constexpr auto ExtractDataOfFTPFileDownloadProgressW  = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_PROGRESS>;
-constexpr auto ExtractDataOfFTPFileDownloadErrorW     = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_ERROR>   ;
-constexpr auto ExtractDataOfFTPFileDownloadFinishW    = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_DOWNLOAD_FINISH>  ;
-constexpr auto ExtractDataOfFTPFileUploadStartW       = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_START>     ;
-constexpr auto ExtractDataOfFTPFileUploadProgressW    = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_PROGRESS>  ;
-constexpr auto ExtractDataOfFTPFileUploadErrorW       = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_ERROR>     ;
-constexpr auto ExtractDataOfFTPFileUploadFinishW      = &ExtractWithPath<std::wstring, MsgEnum::FTP_FILE_UPLOAD_FINISH>    ;
+static Notify BuildUploadStart(const std::string &filenameOnServer, const FTPClientPathType &filenameOnLocal)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_UPLOAD_START;
+    auto data = new DataOfFTPFileUploadStart;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildUploadProgress(const std::string &filenameOnServer, 
+                                              const FTPClientPathType &filenameOnLocal,
+                                              uint64_t byteSend,
+                                              uint64_t fileSize)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_UPLOAD_PROGRESS;
+    auto data = new DataOfFTPFileUploadProgress;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    data->bytesSend = byteSend;
+    data->fileSize = fileSize;    
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildUploadError(const std::string &filenameOnServer, 
+                                        const FTPClientPathType &filenameOnLocal,
+                                        const std::string &errmsg)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_UPLOAD_ERROR;
+    auto data = new DataOfFTPFileUploadError;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    data->errmsg = errmsg;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+static Notify BuildUploadFinish(const std::string &filenameOnServer, const FTPClientPathType &filenameOnLocal)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_FILE_UPLOAD_FINISH;
+    auto data = new DataOfFTPFileUploadFinish;
+    data->filenameOnServer = filenameOnServer;
+    data->filenameOnLocal = filenameOnLocal;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+
+static Notify BuildGetDirContentError(const std::string &errmsg)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_GET_DIR_CONTENT_ERROR;
+    auto data = new DataOfFTPGetDirContentError;
+    data->errmsg = errmsg;
+    notify.data = reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+
+static Notify BuildCmdRecvData(const std::string &text)
+{
+    Notify notify;
+    notify.msg = MsgEnum::FTP_CMD_RECV_DATA;
+    auto data = new DataOfFTPCmdRecvData;
+    data->data = text;
+    notify.data =  reinterpret_cast <void *>(data);
+    data = nullptr;
+    return notify;
+}
+// 释放Notify的void *成员占用的资源
+void ReleaseNotify(Notify &notify);
 
 
 }// namespace ftpclient

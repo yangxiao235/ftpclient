@@ -29,9 +29,9 @@ add_library(libftpclient STATIC
     ftp.cpp
     async_cmd/async_cmd.cpp
     cmd_task/ftp_cmd_queue.cpp
-    cmd_task/network_task.cpp
-    data_trans_task/data_trans_related_request.cpp
+    data_trans_task/file_save_policy.cpp
     notify/ftp_notify_queue.cpp
+    notify/ftp_notify_msg.cpp
     thread_model/thread_task_queue.cpp
     thread_model/thread_task.cpp
     thread_model/thread_state.cpp

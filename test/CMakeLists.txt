@@ -44,3 +44,17 @@ add_executable(test_basic_ftpclient
    test_basic_ftpclient/test_basic_ftp_client.cpp)
 target_link_libraries(test_basic_ftpclient
     libftpclient glogd)   
+
+add_executable(test_ftp_notify_msg  test_ftp_notify_msg.cpp)    
+
+add_executable(test_upload_file  test_upload_file.cpp)
+target_link_libraries(test_upload_file 
+    libftpclient glogd)
+
+add_executable(test_download_file  test_download_file.cpp)
+target_link_libraries(test_download_file 
+    libftpclient glogd)   
+
+add_executable(test_download_dir  test_download_dir_contents.cpp)
+target_link_libraries(test_download_dir 
+    libftpclient glogd)      

@@ -55,25 +55,39 @@ void MonitorStdioTask::Run()
         sout << "\r\n";
         m_cmdQueue.Enqueue(sout.str());
     }
-    Notify notify(MsgType::DEFAULT);
+    Notify notify;;
     if (!m_notifyQueue.IsEmpty()) {
         notify = m_notifyQueue.Front();
         m_notifyQueue.Dequeue();
-        switch (notify.type) {
-        case MsgType::FTP_REPLY:
-            fprintf(stderr, notify.reply.detail.c_str());
-            break;
-        case MsgType::NETWORK_CONNECT:
-            fprintf(stderr, "Connection has been established\n");
-            break;
-        case MsgType::NETWORK_CLOSED:    
-        case MsgType::NETWORK_ERROR:
-            fprintf(stderr, "Network error occured.\n");
-            break;
-        default:
-            fprintf(stderr, "Unknown notify type\n");
+        switch (notify.msg) {
+        case MsgEnum::FTP_CMD_RECV_DATA:
+        {
+            auto msgdata = ExtractDataOfFTPCmdRecvData(notify);
+            notify.data = nullptr;
+            fprintf(stderr, msgdata->data.c_str());
             break;
         }
+        case MsgEnum::FTP_CMD_NETWORK_CONNECT:
+        {
+            auto msgdata = ExtractDataOfFTPCmdNetworkConnect(notify);
+            notify.data = nullptr;
+            fprintf(stderr, "Connection has been established\n");
+            break;
+        }
+        case MsgEnum::FTP_CMD_NETWORK_CLOSED:    
+            fprintf(stderr, "Connection has been closed.\n");
+            break;
+        case MsgEnum::FTP_CMD_NETWORK_ERROR:
+        {
+            auto msgdata = ExtractDataOfFTPCmdNetworkError(notify);
+            fprintf(stderr, "Network error: %s.\n", msgdata->errmsg.c_str());
+            break;
+        }
+        default:
+            fprintf(stderr, "Unknown notify type\n");
+            ReleaseNotify(notify);
+            break;
+        }// end of  switch (notify.type) {
     }
 }
 

@@ -2,7 +2,7 @@
 #include "ftpclient/ftp_error.h"
 #include "ftpclient/cmd_task/network_task.h"
 #include "ftpclient/thread_model/thread_task_queue.h"
-#include "ftpclient/notify/ftp_notify_queue.h"
+#include "ftpclient/notify/ftp_notify_policy.h"
 #include "ftpclient/thread_model/thread_model.h"
 #include "monitor_stdio_task.h"
 #include <cstdio>
@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
     // 创建io监视线程
     auto ioThread = TaskBasedThread::Start();
     // 创建网络线程任务
-    netThread.queue.Enqueue(ThreadTask::Create(new FTPClientTask("172.125.1.2", 21, cmdQueue, notifyQueue)));
+    netThread.queue.Enqueue(ThreadTask::Create(new FTPClientTask<NotifyUsingQueue>("172.125.1.2", 21, cmdQueue)));
     // 创建io监视任务
     ioThread.queue.Enqueue(ThreadTask::Create(new MonitorStdioTask(cmdQueue)));
     // 读取输入命令    
-    Notify notify(MsgType::DEFAULT);
+    Notify notify;
     std::string line;    
     char buf[256];
     while (fgets(buf, sizeof buf, stdin)) {

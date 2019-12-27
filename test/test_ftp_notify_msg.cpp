@@ -8,30 +8,30 @@ int main()
 {
     {
         Notify notify;
-        auto data = new DataOfFTPFileUploadProgress<std::string>;
+        auto data = new DataOfFTPFileUploadProgress;
         data->filenameOnLocal = "D:\\doc\\somedoc.txt";
         data->filenameOnServer = "/home/ftp/doc/somedoc.txt";
-        data->bytesRecv = 3000;
+        data->bytesSend = 3000;
         data->fileSize = 8091;
         notify.msg = MsgEnum::FTP_FILE_UPLOAD_PROGRESS;
         notify.data = reinterpret_cast<void *>(data);
 
-        auto msgdata = ExtractDataOfFTPFileUploadProgress<std::string>(notify);
+        auto msgdata = ExtractDataOfFTPFileUploadProgress(notify);
         std::cout << msgdata->filenameOnLocal << std::endl;
         std::cout << msgdata->filenameOnServer << std::endl;
-        std::cout << msgdata->bytesRecv << std::endl;
+        std::cout << msgdata->bytesSend << std::endl;
         std::cout << msgdata->fileSize << std::endl;
     }
     std::cout << "-----------------" <<std::endl;
     {
         Notify notify;
-        auto data = new DataOfFTPFileDownloadFinish<std::string>;
+        auto data = new DataOfFTPFileDownloadFinish;
         data->filenameOnServer = "/home/ftp/doc/somedoc.txt";
         data->filenameOnLocal = "D:\\temp\\doc.txt";
         notify.msg = MsgEnum::FTP_FILE_DOWNLOAD_FINISH;
         notify.data = reinterpret_cast<void *>(data);
         
-        auto msgdata = ExtractDataOfFTPFileDownloadFinishA(notify);
+        auto msgdata = ExtractDataOfFTPFileDownloadFinish(notify);
         std::cout << msgdata->filenameOnLocal << std::endl;
         std::cout << msgdata->filenameOnServer << std::endl;
     }
